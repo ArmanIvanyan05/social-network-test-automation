@@ -1,10 +1,14 @@
 """Synchronous HTTP client foundation."""
 
 import logging
+from collections.abc import Mapping
 from types import TracebackType
 from typing import Any, Self
 
 import httpx
+
+from social_network_automation.reporting.allure_helpers import allure_step
+from social_network_automation.reporting.api import attach_api_exchange
 
 LOGGER = logging.getLogger(__name__)
 
@@ -26,13 +30,16 @@ class ApiClient:
         path: str,
         *,
         token: str | None = None,
+        headers: Mapping[str, str] | None = None,
         json: Any | None = None,
     ) -> httpx.Response:
         """Send a request and return the unmodified response for test assertions."""
-        headers = {"Authorization": f"Bearer {token}"} if token else None
+        request_headers = dict(headers or {})
+        if token:
+            request_headers["Authorization"] = f"Bearer {token}"
         request_options: dict[str, Any] = {}
-        if headers is not None:
-            request_options["headers"] = headers
+        if request_headers:
+            request_options["headers"] = request_headers
         if json is not None:
             request_options["json"] = json
         LOGGER.info(
@@ -43,7 +50,15 @@ class ApiClient:
                 "authenticated": token is not None,
             },
         )
-        response = self._client.request(method, path, **request_options)
+        with allure_step(f"{method.upper()} {path}"):
+            response = self._client.request(method, path, **request_options)
+        attach_api_exchange(
+            method=method,
+            path=path,
+            request_headers=request_headers,
+            request_body=json,
+            response=response,
+        )
         LOGGER.info(
             "api_response",
             extra={

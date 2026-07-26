@@ -51,3 +51,8 @@ def attach_trace(trace_path: Path, *, name: str) -> None:
         attachment_type="application/zip",
         extension="zip",
     )
+
+
+def attach_text(content: str, *, name: str) -> None:
+    """Attach sanitized plain text to the active Allure test."""
+    _attach_content(content, name=name, attachment_type="text/plain", extension="txt")

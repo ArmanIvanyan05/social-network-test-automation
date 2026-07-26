@@ -36,6 +36,7 @@ class Settings(BaseSettings):
     ui_timeout_ms: int = Field(default=10_000, gt=0)
     api_timeout_seconds: float = Field(default=10.0, gt=0)
     ignore_https_errors: bool = False
+    cors_proxy: bool = False
     artifacts_dir: Path = Path("artifacts")
 
     @property
